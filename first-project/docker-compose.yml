@@ -1,0 +1,61 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: admin
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: first-project
+    container_name: first-project-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    networks:
+      - first-project
+
+  db:
+    image: mysql:8.0
+    container_name: first-project-db
+    environment:
+      - MYSQL_DATABASE=first_project
+      - MYSQL_ROOT_PASSWORD=password
+    volumes:
+      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+    ports:
+      - 3307:3306
+    networks:
+      - first-project
+
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin
+    container_name: first-project-phpmyadmin
+    restart: always
+    ports:
+      - 8181:80
+    environment:
+      PMA_HOST: db
+      PMA_ARBITRARY: 1
+      MYSQL_ROOT_PASSWORD: Notify
+    networks:
+      -  first-project
+
+  nginx:
+    image: nginx:alpine
+    container_name: first-project-nginx
+    restart: unless-stopped
+    ports:
+      - 127.0.0.6:8000:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - first-project
+
+networks:
+  first-project:
+    driver: bridge
